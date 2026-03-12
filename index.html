@@ -30,7 +30,7 @@ html.light{
 --green:#4a7a5a;--green-dim:rgba(74,122,90,.1);
 --red:#994a4a;--red-dim:rgba(153,74,74,.1);
 }
-html{background:var(--bg);color:var(--text);font-family:'DM Sans',-apple-system,sans-serif;font-size:16px;line-height:1.5;height:-webkit-fill-available;overflow:hidden;-webkit-font-smoothing:antialiased;padding-top:env(safe-area-inset-top,0px)}
+html{background:var(--bg);color:var(--text);font-family:'DM Sans',-apple-system,sans-serif;font-size:16px;line-height:1.5;height:-webkit-fill-available;overflow:hidden;-webkit-font-smoothing:antialiased}
 body{display:flex;flex-direction:column;background:var(--bg);min-height:100vh;min-height:-webkit-fill-available;min-height:100dvh;overflow:hidden}
 /* fill the bottom safe-area so no gap shows under the nav */
 body::after{content:'';display:block;position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);background:var(--surface);z-index:99}
@@ -40,7 +40,8 @@ body::after{content:'';display:block;position:fixed;bottom:0;left:0;right:0;heig
 .ico-lg{width:24px;height:24px}
 
 /* ── Header ── */
-.hdr{padding:10px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);position:relative;z-index:10}
+.hdr{padding:10px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);position:relative;z-index:10}
+@supports(padding-top:env(safe-area-inset-top)){.hdr{padding-top:calc(env(safe-area-inset-top) + 10px)}}
 .hdr h1{font-family:'DM Mono',monospace;font-size:17px;font-weight:300;letter-spacing:.08em;color:var(--accent)}
 .hdr-r{display:flex;align-items:center;gap:10px}
 .hdr-date{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace}
