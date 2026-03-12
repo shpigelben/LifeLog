@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LifeLog">
+<meta name="theme-color" content="#0a0a0a">
+<title>LifeLog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+--bg:#0a0a0a;--surface:#131313;--surface2:#1a1a1a;--surface3:#222;
+--border:#252525;--border-hi:#333;
+--text:#e0dcd6;--text-dim:#6a655e;--text-mid:#9a958e;
+--accent:#c4a070;--accent-dim:rgba(196,160,112,.1);--accent-mid:rgba(196,160,112,.25);
+--green:#72a882;--green-dim:rgba(114,168,130,.12);
+--red:#b86e6e;--red-dim:rgba(184,110,110,.12);
+--radius:14px;--radius-sm:10px;
+--safe-top:env(safe-area-inset-top,0px);--safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html.light{
+--bg:#f4f1eb;--surface:#fff;--surface2:#eee9e2;--surface3:#e4dfd8;
+--border:#d8d3cb;--border-hi:#cac5bd;
+--text:#252015;--text-dim:#8a857e;--text-mid:#6a655e;
+--accent:#8a6a3a;--accent-dim:rgba(138,106,58,.08);--accent-mid:rgba(138,106,58,.2);
+--green:#4a7a5a;--green-dim:rgba(74,122,90,.1);
+--red:#994a4a;--red-dim:rgba(153,74,74,.1);
+}
+html,body{background:var(--bg);color:var(--text);font-family:'DM Sans',-apple-system,sans-serif;font-size:16px;line-height:1.5;height:100%;overflow:hidden;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column}
+
+/* ── Icons ── */
+.ico{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ico-lg{width:24px;height:24px}
+
+/* ── Header ── */
+.hdr{padding:calc(var(--safe-top)+10px) 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--bg);position:relative;z-index:10}
+.hdr h1{font-family:'DM Mono',monospace;font-size:17px;font-weight:300;letter-spacing:.08em;color:var(--accent)}
+.hdr-r{display:flex;align-items:center;gap:10px}
+.hdr-date{font-size:11px;color:var(--text-dim);font-family:'DM Mono',monospace}
+.hdr-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px}
+.hdr-btn:active{background:var(--surface2)}
+
+/* ── Main ── */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:12px 16px calc(var(--safe-bottom)+72px)}
+.section{display:none}.section.active{display:block}
+
+/* ── Nav ── */
+.nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;padding:6px 16px calc(var(--safe-bottom)+6px);z-index:100}
+.nav-btn{flex:1;background:none;border:none;color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;transition:color .2s}
+.nav-btn.active{color:var(--accent)}
+
+/* ── Group cards ── */
+.grp{margin-bottom:16px}
+.grp-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;padding-left:2px}
+.grp-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;overflow:hidden}
+
+/* ── Tile buttons inside groups ── */
+.tiles{display:grid;gap:8px}
+.tiles-2{grid-template-columns:1fr 1fr}
+.tiles-3{grid-template-columns:1fr 1fr 1fr}
+.tiles-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.tile{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:12px 6px;border-radius:var(--radius-sm);cursor:pointer;
+  transition:all .12s;-webkit-user-select:none;user-select:none;
+  background:var(--surface2);border:1px solid transparent;
+}
+.tile:active{transform:scale(.95)}
+.tile .t-ico{color:var(--text-mid)}
+.tile .t-label{font-size:11px;font-weight:500;color:var(--text)}
+.tile .t-sub{font-family:'DM Mono',monospace;font-size:9px;color:var(--text-dim);text-align:center}
+.tile.lit{background:var(--accent-dim);border-color:var(--accent)}
+.tile.lit .t-ico{color:var(--accent)}
+.tile.lit .t-label{color:var(--accent)}
+.tile.lit-red{background:var(--red-dim);border-color:var(--red)}
+.tile.lit-red .t-ico,.tile.lit-red .t-label{color:var(--red)}
+
+/* ── Timeline ── */
+.tl{position:relative;padding-left:18px;margin-top:8px}
+.tl::before{content:'';position:absolute;left:5px;top:2px;bottom:2px;width:1px;background:var(--border)}
+.tl-it{position:relative;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.tl-it:active{opacity:.7}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);position:absolute;left:-18px;top:4px;border:2px solid var(--surface)}
+.tl-time{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);min-width:46px;padding-top:1px}
+.tl-txt{font-size:12px;color:var(--text)}
+.tl-det{font-size:10px;color:var(--text-dim);margin-top:1px}
+
+/* ── Score bars ── */
+.sb{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.sb-row{display:flex;align-items:center;gap:8px}
+.sb-lbl{font-size:11px;color:var(--text-dim);width:56px;flex-shrink:0}
+.sb-bg{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.sb-fill{height:100%;border-radius:3px;transition:width .4s}
+.sb-val{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-mid);width:16px;text-align:right}
+
+/* ── Textarea ── */
+.food-textarea{
+  width:100%;min-height:60px;max-height:200px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.5;resize:vertical;
+}
+.food-textarea::placeholder{color:var(--text-dim)}
+.food-textarea:focus{outline:none;border-color:var(--accent)}
+
+/* ── History ── */
+.hi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px}
+.hi-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);margin-bottom:6px}
+.hi-tags{font-size:12px;color:var(--text-mid);line-height:1.8}
+.hi-tag{display:inline-block;background:var(--surface2);border-radius:6px;padding:2px 7px;font-family:'DM Mono',monospace;font-size:10px;color:var(--text-dim);margin:2px;cursor:pointer}
+.hi-tag:active{background:var(--surface3)}
+
+/* ── Export ── */
+.ex-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:10px}
+.ex-card p{font-size:13px;color:var(--text-dim);margin-bottom:14px}
+.ex-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;background:var(--accent);border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--bg);cursor:pointer}
+.stat-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+.stat-row:last-child{border-bottom:none}
+.s-l{color:var(--text-dim)}.s-v{font-family:'DM Mono',monospace;color:var(--text)}
+
+/* ── Modal ── */
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.mo.open{opacity:1;pointer-events:auto}
+.mo-box{background:var(--surface);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;padding:16px 20px calc(var(--safe-bottom)+16px);transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1)}
+.mo.open .mo-box{transform:translateY(0)}
+.mo-handle{width:32px;height:3px;background:var(--border-hi);border-radius:2px;margin:0 auto 14px}
+.mo-title{font-size:16px;font-weight:600;margin-bottom:14px;text-align:center}
+.mo-sub{font-size:11px;color:var(--text-dim);text-align:center;margin-top:-10px;margin-bottom:14px;font-family:'DM Mono',monospace}
+
+.sc-pick{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.sc-opt{width:48px;height:48px;border-radius:var(--radius-sm);background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:17px;color:var(--text-mid);cursor:pointer;transition:all .12s}
+.sc-opt:active{transform:scale(.9)}
+.sc-opt.sel{background:var(--accent);border-color:var(--accent);color:var(--bg);font-weight:600}
+
+.mo-acts{display:flex;gap:8px;margin-top:14px}
+.mo-btn{flex:1;padding:13px;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .12s}
+.mo-btn:active{transform:scale(.97)}
+.mo-btn.pri{background:var(--accent);color:var(--bg)}
+.mo-btn.sec{background:var(--surface2);color:var(--text-mid);border:1px solid var(--border)}
+.mo-btn.dan{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}
+
+.mi-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.mi-in{flex:1;height:40px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px}
+.mi-in:focus{outline:none;border-color:var(--accent)}
+.mi-in.g{width:70px;flex:none;text-align:center;font-family:'DM Mono',monospace}
+.mi-in::placeholder{color:var(--text-dim)}
+.mi-rm{width:28px;height:28px;border-radius:6px;background:none;border:1px solid var(--border);color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px}
+.mi-rm:active{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+.mi-add{width:100%;padding:9px;background:var(--surface2);border:1px dashed var(--border);border-radius:8px;color:var(--text-dim);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:10px}
+.mi-add:active{border-color:var(--accent);color:var(--accent)}
+
+/* time input */
+.time-row{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
+.time-btn{flex:1;max-width:160px;padding:12px;border-radius:var(--radius-sm);background:var(--surface2);border:2px solid var(--border);text-align:center;cursor:pointer;transition:all .12s}
+.time-btn:active{transform:scale(.95)}
+.time-btn.sel{border-color:var(--accent);background:var(--accent-dim)}
+.time-btn .tb-label{font-size:12px;color:var(--text-mid)}
+.time-btn .tb-val{font-family:'DM Mono',monospace;font-size:15px;color:var(--text);margin-top:2px}
+.time-btn.sel .tb-label,.time-btn.sel .tb-val{color:var(--accent)}
+/* number inputs in time picker */
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type="number"]{-moz-appearance:textfield}
+
+/* ── Toast ── */
+.toast{position:fixed;top:calc(var(--safe-top)+56px);left:50%;transform:translateX(-50%) translateY(-16px);background:var(--surface2);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:8px 18px;font-size:12px;color:var(--accent);opacity:0;transition:all .3s;z-index:600;pointer-events:none;font-family:'DM Mono',monospace}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.empty{text-align:center;padding:30px 20px;color:var(--text-dim);font-size:13px}
+.empty-ico{margin-bottom:8px;color:var(--text-dim)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>LifeLog</h1>
+  <div class="hdr-r">
+    <div class="hdr-date" id="hdrDate"></div>
+    <button class="hdr-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+      <svg class="ico" id="themeIco" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+    </button>
+  </div>
+</div>
+
+<div class="main" id="mainContent">
+  <div class="section active" id="sec-today"></div>
+  <div class="section" id="sec-history"></div>
+  <div class="section" id="sec-export"></div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="go('today')" id="nav-today">
+    <svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Today
+  </button>
+  <button class="nav-btn" onclick="go('history')" id="nav-history">
+    <svg class="ico" viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h12"/></svg>History
+  </button>
+  <button class="nav-btn" onclick="go('export')" id="nav-export">
+    <svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Export
+  </button>
+</nav>
+
+<div class="mo" id="mo" onclick="moClose(event)"><div class="mo-box" id="moBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════ SVG ICON MAP ═══════════════
+const ICONS={
+  wake:'<svg class="ico ico-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+  sleep:'<svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z"/></svg>',
+  meal:'<svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2M7 2v20M21 15V2a5 5 0 00-5 5v6h4a1 1 0 001-1M18 15v7"/></svg>',
+  bowel:'<svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M12 22c5.52 0 10-4.48 10-10S17.52 2 12 2 2 6.48 2 12s4.48 10 10 10z"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><circle cx="9" cy="9" r="1" fill="currentColor"/><circle cx="15" cy="9" r="1" fill="currentColor"/></svg>',
+  feeling:'<svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>',
+  clarity:'<svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 01-2 2h-4a2 2 0 01-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><path d="M10 21h4"/></svg>',
+  digestion:'<svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M12 8V4M8 12H4M20 12h-4M7.05 7.05L4.22 4.22M16.95 7.05l2.83-2.83"/><circle cx="12" cy="14" r="6"/></svg>',
+  acne:'<svg class="ico ico-lg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="10" r="1.5"/><circle cx="15" cy="9" r="1"/><circle cx="12" cy="15" r="1.2"/></svg>',
+  heartburn:'<svg class="ico ico-lg" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 9v4M12 17h.01"/></svg>',
+};
+
+// ═══════════════ DB ═══════════════
+const DB='lifelog',VER=4;let db;
+function openDB(){return new Promise((y,n)=>{const r=indexedDB.open(DB,VER);r.onupgradeneeded=e=>{const d=e.target.result;['events','checkins','notes'].forEach(s=>{if(!d.objectStoreNames.contains(s)){d.createObjectStore(s,{keyPath:'id',autoIncrement:true}).createIndex('date','date')}})};r.onsuccess=e=>{db=e.target.result;y()};r.onerror=n})}
+function put(s,d){return new Promise((y,n)=>{const tx=db.transaction(s,'readwrite'),r=d.id?tx.objectStore(s).put(d):tx.objectStore(s).add(d);r.onsuccess=()=>y(r.result);r.onerror=n})}
+function all(s){return new Promise((y,n)=>{const r=db.transaction(s).objectStore(s).getAll();r.onsuccess=()=>y(r.result);r.onerror=n})}
+function del(s,id){return new Promise((y,n)=>{const tx=db.transaction(s,'readwrite');tx.objectStore(s).delete(id);tx.oncomplete=y;tx.onerror=n})}
+function clr(){return new Promise((y,n)=>{const tx=db.transaction(['events','checkins','notes'],'readwrite');tx.objectStore('events').clear();tx.objectStore('checkins').clear();tx.objectStore('notes').clear();tx.oncomplete=y;tx.onerror=n})}
+
+// ═══════════════ UTILS ═══════════════
+const TD=()=>new Date().toISOString().slice(0,10);
+const NOW=()=>new Date().toISOString();
+const TM=iso=>new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});
+const FD=d=>new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+const esc=s=>(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+let curTab='today',mealTmp=[];
+
+// ═══════════════ THEME ═══════════════
+function toggleTheme(){const l=document.documentElement.classList.toggle('light');localStorage.setItem('ll-t',l?'l':'d');updThemeIco()}
+function updThemeIco(){const l=document.documentElement.classList.contains('light');document.getElementById('themeIco').innerHTML=l?'<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>':'<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>'}
+function loadTheme(){if(localStorage.getItem('ll-t')==='l')document.documentElement.classList.add('light');updThemeIco()}
+
+// ═══════════════ TOAST / MODAL ═══════════════
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2000)}
+function moOpen(h){document.getElementById('moBox').innerHTML='<div class="mo-handle"></div>'+h;document.getElementById('mo').classList.add('open')}
+function moCloseNow(){document.getElementById('mo').classList.remove('open')}
+function moClose(e){if(e.target===document.getElementById('mo'))moCloseNow()}
+
+// ═══════════════ TODAY TAB ═══════════════
+async function renderToday(){
+  const evs=(await all('events')).filter(e=>e.date===TD());
+  const cks=(await all('checkins')).filter(c=>c.date===TD());
+
+  const wakeEv=evs.find(e=>e.type==='wake');
+  const sleepEv=evs.find(e=>e.type==='sleep');
+  const meals=evs.filter(e=>e.type==='meal').sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  const bowels=evs.filter(e=>e.type==='bowel').sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  const heartburns=evs.filter(e=>e.type==='heartburn').sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+
+  let html='';
+
+  // ─── GROUP: RHYTHM ───
+  html+=`<div class="grp"><div class="grp-label">Rhythm</div><div class="grp-card"><div class="tiles tiles-2">`;
+  // Wake/Sleep combined button
+  const wsLogged=wakeEv||sleepEv;
+  let wsSub='tap to log';
+  if(wakeEv&&sleepEv)wsSub=TM(wakeEv.timestamp)+' — '+TM(sleepEv.timestamp);
+  else if(wakeEv)wsSub='woke '+TM(wakeEv.timestamp);
+  else if(sleepEv)wsSub='slept '+TM(sleepEv.timestamp);
+  html+=`<div class="tile ${wsLogged?'lit':''}" onclick="openSleepWake()"><span class="t-ico">${ICONS.wake}</span><span class="t-label">Wake / Sleep</span><span class="t-sub">${wsSub}</span></div>`;
+  // Bowel
+  const bowelN=bowels.length;
+  html+=`<div class="tile ${bowelN?'lit':''}" onclick="logBowel()"><span class="t-ico">${ICONS.bowel}</span><span class="t-label">Bowel</span><span class="t-sub">${bowelN?TM(bowels[bowels.length-1].timestamp)+(bowelN>1?' (×'+bowelN+')':''):'tap to log'}</span></div>`;
+  html+=`</div></div></div>`;
+
+  // ─── GROUP: NUTRITION ───
+  html+=`<div class="grp"><div class="grp-label">Nutrition</div><div class="grp-card"><div class="tiles tiles-2">`;
+  // Meal
+  const mealN=meals.length;
+  html+=`<div class="tile ${mealN?'lit':''}" onclick="openMealModal()"><span class="t-ico">${ICONS.meal}</span><span class="t-label">Meal</span><span class="t-sub">${mealN?mealN+' logged':'tap to log'}</span></div>`;
+  // Heartburn onset
+  const hbN=heartburns.length;
+  html+=`<div class="tile ${hbN?'lit-red':''}" onclick="logHeartburn()"><span class="t-ico">${ICONS.heartburn}</span><span class="t-label">Heartburn</span><span class="t-sub">${hbN?TM(heartburns[heartburns.length-1].timestamp)+(hbN>1?' (×'+hbN+')':''):'tap on onset'}</span></div>`;
+  html+=`</div></div></div>`;
+
+  // ─── GROUP: BODY SIGNALS ───
+  html+=`<div class="grp"><div class="grp-label">Body Signals</div><div class="grp-card"><div class="tiles tiles-3">`;
+  const scaleKeys=[
+    {key:'feeling',label:'Feeling',desc:'1 great → 5 terrible',ico:ICONS.feeling},
+    {key:'clarity',label:'Clarity',desc:'1 sharp → 5 foggy',ico:ICONS.clarity},
+
+    {key:'acne',label:'Acne',desc:'1 clear → 5 flare',ico:ICONS.acne},
+  ];
+  scaleKeys.forEach(s=>{
+    // find latest checkin for this key today
+    const entries=cks.filter(c=>c.key===s.key).sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+    const latest=entries[0];
+    const lit=latest?'lit':'';
+    const sub=latest?latest.val+'/5 · '+TM(latest.timestamp):'tap';
+    html+=`<div class="tile ${lit}" onclick="openScaleModal('${s.key}','${esc(s.label)}','${esc(s.desc)}')"><span class="t-ico">${s.ico}</span><span class="t-label">${s.label}</span><span class="t-sub">${sub}</span></div>`;
+  });
+  html+=`</div></div></div>`;
+
+  // ─── TIMELINE ───
+  const allEv=[...evs,...cks.map(c=>({...c,_ck:true}))].sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  if(allEv.length){
+    html+=`<div class="grp"><div class="grp-label">Timeline</div><div class="grp-card"><div class="tl">`;
+    allEv.forEach(e=>{
+      if(e._ck){
+        html+=`<div class="tl-it" onclick="openCkEdit(${e.id})"><div class="tl-dot" style="background:var(--text-dim)"></div><span class="tl-time">${TM(e.timestamp)}</span><div><span class="tl-txt">${esc(e.key)} ${e.val}/5</span></div></div>`;
+      } else {
+        let det='';
+        if(e.mealItems?.length)det=e.mealItems.map(m=>`${m.name}${m.grams?' ('+m.grams+'g)':''}`).filter(Boolean).join(', ');
+        html+=`<div class="tl-it" onclick="openEvEdit(${e.id})"><div class="tl-dot"></div><span class="tl-time">${TM(e.timestamp)}</span><div><span class="tl-txt">${e.type}</span>${det?`<div class="tl-det">${esc(det)}</div>`:''}</div></div>`;
+      }
+    });
+    html+=`</div></div></div>`;
+  }
+
+  // ─── SCORE BARS (latest per key) ───
+  const latestScores=[];
+  scaleKeys.forEach(s=>{
+    const entries=cks.filter(c=>c.key===s.key).sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+    if(entries[0])latestScores.push({label:s.label,val:entries[0].val});
+  });
+  if(latestScores.length){
+    html+=`<div class="grp"><div class="grp-label">Latest Scores</div><div class="grp-card"><div class="sb">`;
+    latestScores.forEach(s=>{
+      const pct=(s.val/5)*100;
+      const c=s.val<=2?'var(--green)':s.val<=3?'var(--accent)':'var(--red)';
+      html+=`<div class="sb-row"><span class="sb-lbl">${s.label}</span><div class="sb-bg"><div class="sb-fill" style="width:${pct}%;background:${c}"></div></div><span class="sb-val">${s.val}</span></div>`;
+    });
+    html+=`</div></div></div>`;
+  }
+
+  // ─── NOTES ───
+  const notes=await all('notes');
+  const todayNote=notes.find(n=>n.date===TD());
+  html+=`<div class="grp"><div class="grp-label">Notes</div><div class="grp-card">`;
+  html+=`<textarea class="food-textarea" id="dayNotes" placeholder="Anything else worth noting today..." oninput="markNotesDirty()" style="min-height:80px">${esc(todayNote?.text||'')}</textarea>`;
+  html+=`<button class="mo-btn pri" id="saveNotesBtn" style="margin-top:8px;padding:10px;font-size:13px;width:100%;opacity:.4;pointer-events:none" onclick="saveNotes()">Save Notes</button>`;
+  html+=`</div></div>`;
+
+  document.getElementById('sec-today').innerHTML=html;
+}
+
+function markNotesDirty(){
+  const btn=document.getElementById('saveNotesBtn');
+  if(btn){btn.style.opacity='1';btn.style.pointerEvents='auto'}
+}
+
+async function saveNotes(){
+  const text=(document.getElementById('dayNotes')?.value||'').trim();
+  const notes=await all('notes');
+  const existing=notes.find(n=>n.date===TD());
+  if(existing){existing.text=text;await put('notes',existing)}
+  else if(text){await put('notes',{date:TD(),text,timestamp:NOW()})}
+  const btn=document.getElementById('saveNotesBtn');
+  if(btn){btn.style.opacity='.4';btn.style.pointerEvents='none'}
+  toast('Notes saved');
+}
+
+// ── Wake/Sleep modal ──
+async function openSleepWake(){
+  const evs=(await all('events')).filter(e=>e.date===TD());
+  const wk=evs.find(e=>e.type==='wake');
+  const sl=evs.find(e=>e.type==='sleep');
+
+  let h=`<div class="mo-title">Wake / Sleep</div>`;
+
+  // Wake section
+  h+=`<div style="margin-bottom:16px"><div style="font-size:13px;color:var(--text-mid);margin-bottom:8px;display:flex;align-items:center;gap:6px">${ICONS.wake} Wake${wk?' <span style="font-family:DM Mono;font-size:11px;color:var(--accent)">'+TM(wk.timestamp)+'</span>':''}</div>`;
+  h+=buildTimePick('wake',wk?wk.timestamp:null);
+  h+=`<div class="mo-acts" style="margin-top:4px;margin-bottom:12px"><button class="mo-btn pri" style="flex:none;padding:10px 20px;font-size:13px" onclick="saveWS('wake')">Save Wake</button>`;
+  if(wk)h+=`<button class="mo-btn dan" style="flex:none;padding:10px 16px;font-size:13px" onclick="delEv(${wk.id})">Remove</button>`;
+  h+=`</div></div>`;
+
+  // Divider
+  h+=`<div style="border-top:1px solid var(--border);margin-bottom:16px"></div>`;
+
+  // Sleep section
+  h+=`<div style="margin-bottom:8px"><div style="font-size:13px;color:var(--text-mid);margin-bottom:8px;display:flex;align-items:center;gap:6px">${ICONS.sleep} Sleep${sl?' <span style="font-family:DM Mono;font-size:11px;color:var(--accent)">'+TM(sl.timestamp)+'</span>':''}</div>`;
+  h+=buildTimePick('sleep',sl?sl.timestamp:null);
+  h+=`<div class="mo-acts" style="margin-top:4px"><button class="mo-btn pri" style="flex:none;padding:10px 20px;font-size:13px" onclick="saveWS('sleep')">Save Sleep</button>`;
+  if(sl)h+=`<button class="mo-btn dan" style="flex:none;padding:10px 16px;font-size:13px" onclick="delEv(${sl.id})">Remove</button>`;
+  h+=`</div></div>`;
+
+  h+=`<div class="mo-acts"><button class="mo-btn sec" onclick="moCloseNow()">Done</button></div>`;
+  moOpen(h);
+  if(!wk)pickTimeNow('wake');
+  if(!sl)pickTimeNow('sleep');
+}
+
+async function saveWS(type){
+  const ts=resolveTimePick(type);
+  const evs=(await all('events')).filter(e=>e.date===TD()&&e.type===type);
+  for(const e of evs)await del('events',e.id);
+  await put('events',{type,date:TD(),timestamp:ts});
+  toast(type+' logged at '+TM(ts));
+  moCloseNow();refresh();
+}
+
+// ── Shared time picker builder ──
+// Returns HTML for a "Now / Manual" row with a unique prefix
+let _timePick={};// stores {prefix: 'now'|timestamp}
+function buildTimePick(prefix,existingTs){
+  const now=new Date();
+  const hh=String(now.getHours()).padStart(2,'0');
+  const mm=String(now.getMinutes()).padStart(2,'0');
+  _timePick[prefix]=existingTs||null;
+  const selNow=!existingTs?'sel':'';
+  let h=`<div style="margin-bottom:12px">`;
+  h+=`<div style="font-size:11px;color:var(--text-dim);margin-bottom:6px">When</div>`;
+  h+=`<div class="time-row">`;
+  h+=`<div class="time-btn ${selNow}" id="${prefix}_nowBtn" onclick="pickTimeNow('${prefix}')"><div class="tb-label">Now</div><div class="tb-val">${hh}:${mm}</div></div>`;
+  h+=`<div class="time-btn" id="${prefix}_manBtn" onclick="pickTimeManShow('${prefix}')"><div class="tb-label">Manual</div><div class="tb-val" id="${prefix}_manVal">${existingTs?TM(existingTs):'Set time'}</div></div>`;
+  h+=`</div>`;
+  h+=`<div id="${prefix}_manRow" style="display:${existingTs?'flex':'none'};justify-content:center;gap:6px;margin-top:8px;align-items:center">`;
+  h+=`<input id="${prefix}_hIn" type="number" min="0" max="23" placeholder="HH" style="width:54px;height:40px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:DM Mono,monospace;font-size:16px;text-align:center;-moz-appearance:textfield" oninput="pickTimeManual('${prefix}')">`;
+  h+=`<span style="color:var(--text-dim);font-size:18px;font-weight:600">:</span>`;
+  h+=`<input id="${prefix}_mIn" type="number" min="0" max="59" placeholder="MM" style="width:54px;height:40px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:DM Mono,monospace;font-size:16px;text-align:center;-moz-appearance:textfield" oninput="pickTimeManual('${prefix}')">`;
+  h+=`</div></div>`;
+  // If editing, pre-fill manual inputs
+  if(existingTs){
+    const d=new Date(existingTs);
+    setTimeout(()=>{
+      const hEl=document.getElementById(prefix+'_hIn');
+      const mEl=document.getElementById(prefix+'_mIn');
+      if(hEl)hEl.value=String(d.getHours()).padStart(2,'0');
+      if(mEl)mEl.value=String(d.getMinutes()).padStart(2,'0');
+    },50);
+  }
+  return h;
+}
+
+function pickTimeNow(prefix){
+  _timePick[prefix]='now';
+  document.getElementById(prefix+'_nowBtn').classList.add('sel');
+  document.getElementById(prefix+'_manBtn').classList.remove('sel');
+  document.getElementById(prefix+'_manRow').style.display='none';
+}
+
+function pickTimeManShow(prefix){
+  document.getElementById(prefix+'_nowBtn').classList.remove('sel');
+  document.getElementById(prefix+'_manBtn').classList.add('sel');
+  document.getElementById(prefix+'_manRow').style.display='flex';
+  _timePick[prefix]='manual';
+}
+
+function pickTimeManual(prefix){
+  const hh=document.getElementById(prefix+'_hIn').value;
+  const mm=document.getElementById(prefix+'_mIn').value;
+  if(hh!==''&&mm!==''){
+    document.getElementById(prefix+'_manVal').textContent=String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  _timePick[prefix]='manual';
+}
+
+function resolveTimePick(prefix){
+  if(_timePick[prefix]==='now'||!_timePick[prefix]){return NOW()}
+  const hh=parseInt(document.getElementById(prefix+'_hIn')?.value);
+  const mm=parseInt(document.getElementById(prefix+'_mIn')?.value);
+  if(isNaN(hh)||isNaN(mm))return NOW();
+  return TD()+'T'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+':00';
+}
+
+// ── Bowel ──
+function logBowel(){
+  let h=`<div class="mo-title">Log Bowel</div>`;
+  h+=buildTimePick('bowel');
+  h+=`<div class="mo-acts"><button class="mo-btn sec" onclick="moCloseNow()">Cancel</button><button class="mo-btn pri" onclick="saveBowel()">Log</button></div>`;
+  moOpen(h);
+  pickTimeNow('bowel');
+}
+async function saveBowel(){
+  const ts=resolveTimePick('bowel');
+  await put('events',{type:'bowel',date:TD(),timestamp:ts});
+  moCloseNow();toast('Bowel logged');refresh();
+}
+
+// ── Heartburn onset ──
+function logHeartburn(){
+  let h=`<div class="mo-title">Heartburn Onset</div>`;
+  h+=buildTimePick('hb');
+  h+=`<div class="mo-acts"><button class="mo-btn sec" onclick="moCloseNow()">Cancel</button><button class="mo-btn pri" onclick="saveHeartburn()">Log</button></div>`;
+  moOpen(h);
+  pickTimeNow('hb');
+}
+async function saveHeartburn(){
+  const ts=resolveTimePick('hb');
+  await put('events',{type:'heartburn',date:TD(),timestamp:ts});
+  moCloseNow();toast('Heartburn onset logged');refresh();
+}
+
+// ── Meal modal ──
+function openMealModal(editEv){
+  mealTmp=editEv?.mealItems?JSON.parse(JSON.stringify(editEv.mealItems)):[{name:'',grams:''}];
+  const isE=!!editEv;
+  let h=`<div class="mo-title">${isE?'Edit':'Log'} Meal</div>`;
+  h+=buildTimePick('meal',isE?editEv.timestamp:null);
+  h+=`<div style="display:flex;gap:8px;margin-bottom:6px;padding:0 2px"><span style="flex:1;font-size:10px;color:var(--text-dim)">Food</span><span style="width:70px;font-size:10px;color:var(--text-dim);text-align:center">Grams</span><span style="width:28px"></span></div>`;
+  h+=`<div id="mRows">${buildMR()}</div>`;
+  h+=`<button class="mi-add" onclick="addMR()">+ Add item</button>`;
+  h+=`<div class="mo-acts"><button class="mo-btn sec" onclick="moCloseNow()">Cancel</button><button class="mo-btn pri" onclick="saveMeal(${isE?editEv.id:'null'})">${isE?'Update':'Log'}</button></div>`;
+  if(isE)h+=`<div class="mo-acts" style="margin-top:8px"><button class="mo-btn dan" onclick="delEv(${editEv.id})">Delete</button></div>`;
+  moOpen(h);
+  if(!isE)pickTimeNow('meal');
+}
+function buildMR(){return mealTmp.map((it,i)=>`<div class="mi-row"><input class="mi-in" placeholder="e.g. Rice" value="${esc(it.name)}" oninput="mealTmp[${i}].name=this.value"><input class="mi-in g" placeholder="g" value="${esc(String(it.grams||''))}" oninput="mealTmp[${i}].grams=this.value" inputmode="numeric">${mealTmp.length>1?`<button class="mi-rm" onclick="rmMR(${i})">×</button>`:'<span style="width:28px"></span>'}</div>`).join('')}
+function addMR(){mealTmp.push({name:'',grams:''});document.getElementById('mRows').innerHTML=buildMR()}
+function rmMR(i){mealTmp.splice(i,1);document.getElementById('mRows').innerHTML=buildMR()}
+async function saveMeal(eid){
+  const ts=resolveTimePick('meal');
+  const items=mealTmp.filter(i=>i.name.trim());
+  if(eid!=null){const evs=await all('events');const ev=evs.find(e=>e.id===eid);if(ev){ev.mealItems=items.length?items:null;ev.timestamp=ts;await put('events',ev)}}
+  else{const entry={type:'meal',date:TD(),timestamp:ts};if(items.length)entry.mealItems=items;await put('events',entry)}
+  moCloseNow();toast(eid!=null?'Meal updated':'Meal logged');refresh();
+}
+
+// ── Scale modal ──
+function openScaleModal(key,label,desc){
+  let h=`<div class="mo-title">${label}</div><div class="mo-sub">${desc}</div>`;
+  h+=buildTimePick('scale');
+  h+=`<div class="sc-pick">`;
+  for(let i=1;i<=5;i++)h+=`<div class="sc-opt" onclick="saveScale('${key}',${i})">${i}</div>`;
+  h+=`</div><div class="mo-acts"><button class="mo-btn sec" onclick="moCloseNow()">Cancel</button></div>`;
+  moOpen(h);
+  pickTimeNow('scale');
+}
+async function saveScale(key,val){
+  const ts=resolveTimePick('scale');
+  await put('checkins',{key,val,date:TD(),timestamp:ts});
+  moCloseNow();toast(key+' → '+val+'/5');refresh();
+}
+
+// ── Event edit modal ──
+async function openEvEdit(id){
+  const evs=await all('events');const ev=evs.find(e=>e.id===id);if(!ev)return;
+  if(ev.type==='meal'){openMealModal(ev);return}
+  let h=`<div class="mo-title">${ev.type}</div><div class="mo-sub">${TM(ev.timestamp)}</div>`;
+  h+=`<div class="mo-acts"><button class="mo-btn sec" onclick="moCloseNow()">Close</button><button class="mo-btn dan" onclick="delEv(${id})">Delete</button></div>`;
+  moOpen(h);
+}
+
+async function delEv(id){await del('events',id);moCloseNow();toast('Deleted');refresh()}
+
+// ── Checkin edit modal ──
+async function openCkEdit(id){
+  const cks=await all('checkins');const ck=cks.find(c=>c.id===id);if(!ck)return;
+  let h=`<div class="mo-title">Edit ${ck.key}</div><div class="mo-sub">${TM(ck.timestamp)} · ${ck.val}/5</div>`;
+  h+=`<div class="sc-pick">`;
+  for(let i=1;i<=5;i++)h+=`<div class="sc-opt ${ck.val===i?'sel':''}" onclick="updCk(${id},${i})">${i}</div>`;
+  h+=`</div>`;
+  h+=`<div class="mo-acts"><button class="mo-btn sec" onclick="moCloseNow()">Cancel</button><button class="mo-btn dan" onclick="delCk(${id})">Delete</button></div>`;
+  moOpen(h);
+}
+async function updCk(id,val){
+  const cks=await all('checkins');const ck=cks.find(c=>c.id===id);if(!ck)return;
+  ck.val=val;await put('checkins',ck);moCloseNow();toast('Updated');refresh();
+}
+async function delCk(id){await del('checkins',id);moCloseNow();toast('Deleted');refresh()}
+
+// ═══════════════ HISTORY ═══════════════
+
+function buildScatter(title,points,yLabels,yMax,color,isTime){
+  // points: [{x:dateStr, y:number, label:string, id:number, store:string}]
+  if(!points.length)return '';
+  const W=320,H=120,PAD_L=32,PAD_R=12,PAD_T=16,PAD_B=24;
+  const pw=W-PAD_L-PAD_R,ph=H-PAD_T-PAD_B;
+
+  // x-axis: dates sorted
+  const allDates=[...new Set(points.map(p=>p.x))].sort();
+  const minD=new Date(allDates[0]+'T00:00:00'),maxD=new Date(allDates[allDates.length-1]+'T00:00:00');
+  const spanMs=Math.max(maxD-minD,86400000);
+  const xOf=d=>PAD_L+((new Date(d+'T00:00:00')-minD)/spanMs)*pw;
+
+  // y-axis
+  const yOf=v=>PAD_T+ph-(v/yMax)*ph;
+
+  // Grid lines
+  let svg=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block">`;
+  // horizontal grid
+  for(let i=0;i<=yMax;i++){
+    const y=yOf(i);
+    svg+=`<line x1="${PAD_L}" y1="${y}" x2="${W-PAD_R}" y2="${y}" stroke="var(--border)" stroke-width=".5"/>`;
+  }
+  // y labels
+  if(yLabels){
+    yLabels.forEach((lbl,i)=>{
+      svg+=`<text x="${PAD_L-4}" y="${yOf(i)+3}" text-anchor="end" fill="var(--text-dim)" font-size="8" font-family="DM Mono,monospace">${lbl}</text>`;
+    });
+  } else {
+    for(let i=0;i<=yMax;i++){
+      svg+=`<text x="${PAD_L-4}" y="${yOf(i)+3}" text-anchor="end" fill="var(--text-dim)" font-size="8" font-family="DM Mono,monospace">${i}</text>`;
+    }
+  }
+
+  // x labels (first, last, and some in between)
+  const xDates=allDates.length<=7?allDates:allDates.filter((_,i)=>i===0||i===allDates.length-1||i%Math.ceil(allDates.length/5)===0);
+  xDates.forEach(d=>{
+    const x=xOf(d);
+    const lbl=new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    svg+=`<text x="${x}" y="${H-4}" text-anchor="middle" fill="var(--text-dim)" font-size="8" font-family="DM Mono,monospace">${lbl}</text>`;
+  });
+
+  // Connect points with line if sorted by date
+  const sorted=[...points].sort((a,b)=>a.x.localeCompare(b.x)||a.timestamp.localeCompare(b.timestamp));
+  if(sorted.length>1&&!isTime){
+    // thin connecting line
+    let path='M';
+    sorted.forEach((p,i)=>{path+=(i?'L':'')+xOf(p.x).toFixed(1)+','+yOf(p.y).toFixed(1)});
+    svg+=`<path d="${path}" fill="none" stroke="${color}" stroke-width=".8" opacity=".3"/>`;
+  }
+
+  // Points
+  sorted.forEach(p=>{
+    const cx=xOf(p.x),cy=yOf(p.y);
+    const onclick=p.store==='checkins'?`openCkEdit(${p.id})`:`openEvEdit(${p.id})`;
+    svg+=`<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" opacity=".85" onclick="${onclick}" style="cursor:pointer"><title>${p.label}</title></circle>`;
+  });
+
+  svg+=`</svg>`;
+  return `<div class="grp"><div class="grp-label">${title}</div><div class="grp-card" style="padding:10px 8px">${svg}</div></div>`;
+}
+
+async function renderHistory(){
+  const evs=await all('events');const cks=await all('checkins');
+  if(!evs.length&&!cks.length){document.getElementById('sec-history').innerHTML='<div class="empty"><div class="empty-ico">'+ICONS.clarity+'</div>No entries yet</div>';return}
+
+  let html='';
+
+  // ── Charts ──
+
+  // Body signals (feeling, clarity, acne)
+  const scaleTypes=[
+    {key:'feeling',title:'Feeling',color:'var(--accent)'},
+    {key:'clarity',title:'Clarity',color:'var(--blue, var(--accent))'},
+    {key:'acne',title:'Acne',color:'var(--red)'},
+  ];
+  scaleTypes.forEach(st=>{
+    const pts=cks.filter(c=>c.key===st.key).map(c=>({x:c.date,y:c.val,label:c.key+':'+c.val+' '+TM(c.timestamp),id:c.id,store:'checkins',timestamp:c.timestamp}));
+    html+=buildScatter(st.title,pts,['0','1','2','3','4','5'],5,st.color,false);
+  });
+
+  // Wake times
+  const wakePts=evs.filter(e=>e.type==='wake').map(e=>{
+    const d=new Date(e.timestamp);const h=d.getHours()+d.getMinutes()/60;
+    return {x:e.date,y:h,label:'wake '+TM(e.timestamp),id:e.id,store:'events',timestamp:e.timestamp};
+  });
+  if(wakePts.length){
+    const yMin=Math.floor(Math.min(...wakePts.map(p=>p.y)));
+    const yMax2=Math.ceil(Math.max(...wakePts.map(p=>p.y)));
+    const range=yMax2-yMin||1;
+    const normPts=wakePts.map(p=>({...p,y:p.y-yMin}));
+    const labels=[];for(let i=0;i<=range;i++)labels.push(String(yMin+i).padStart(2,'0')+':00');
+    html+=buildScatter('Wake Time',normPts,labels,range,'var(--accent)',true);
+  }
+
+  // Sleep times
+  const sleepPts=evs.filter(e=>e.type==='sleep').map(e=>{
+    const d=new Date(e.timestamp);const h=d.getHours()+d.getMinutes()/60;
+    return {x:e.date,y:h,label:'sleep '+TM(e.timestamp),id:e.id,store:'events',timestamp:e.timestamp};
+  });
+  if(sleepPts.length){
+    const yMin=Math.floor(Math.min(...sleepPts.map(p=>p.y)));
+    const yMax2=Math.ceil(Math.max(...sleepPts.map(p=>p.y)));
+    const range=yMax2-yMin||1;
+    const normPts=sleepPts.map(p=>({...p,y:p.y-yMin}));
+    const labels=[];for(let i=0;i<=range;i++)labels.push(String(yMin+i).padStart(2,'0')+':00');
+    html+=buildScatter('Sleep Time',normPts,labels,range,'var(--text-mid)',true);
+  }
+
+  // Bowel count per day
+  const bowelByDate={};
+  evs.filter(e=>e.type==='bowel').forEach(e=>{bowelByDate[e.date]=(bowelByDate[e.date]||0)+1});
+  const bowelPts=Object.entries(bowelByDate).map(([d,n])=>({x:d,y:n,label:n+'× bowel',id:0,store:'none',timestamp:d+'T12:00:00'}));
+  if(bowelPts.length){
+    const mx=Math.max(...bowelPts.map(p=>p.y),3);
+    html+=buildScatter('Bowel / Day',bowelPts,null,mx,'var(--green)',false);
+  }
+
+  // Heartburn count per day
+  const hbByDate={};
+  evs.filter(e=>e.type==='heartburn').forEach(e=>{hbByDate[e.date]=(hbByDate[e.date]||0)+1});
+  const hbPts=Object.entries(hbByDate).map(([d,n])=>({x:d,y:n,label:n+'× heartburn',id:0,store:'none',timestamp:d+'T12:00:00'}));
+  if(hbPts.length){
+    const mx=Math.max(...hbPts.map(p=>p.y),3);
+    html+=buildScatter('Heartburn / Day',hbPts,null,mx,'var(--red)',false);
+  }
+
+  // Meal count per day
+  const mealByDate={};
+  evs.filter(e=>e.type==='meal').forEach(e=>{mealByDate[e.date]=(mealByDate[e.date]||0)+1});
+  const mealPts=Object.entries(mealByDate).map(([d,n])=>({x:d,y:n,label:n+'× meals',id:0,store:'none',timestamp:d+'T12:00:00'}));
+  if(mealPts.length){
+    const mx=Math.max(...mealPts.map(p=>p.y),4);
+    html+=buildScatter('Meals / Day',mealPts,null,mx,'var(--accent)',false);
+  }
+
+  // ── Daily entries ──
+  const notes=await all('notes');
+  const notesByDate={};
+  notes.forEach(n=>{notesByDate[n.date]=n});
+
+  const dates={};
+  evs.forEach(e=>{if(!dates[e.date])dates[e.date]={ev:[],ck:[]};dates[e.date].ev.push(e)});
+  cks.forEach(c=>{if(!dates[c.date])dates[c.date]={ev:[],ck:[]};dates[c.date].ck.push(c)});
+  notes.forEach(n=>{if(!dates[n.date])dates[n.date]={ev:[],ck:[]}});
+  const sorted=Object.keys(dates).sort().reverse();
+
+  html+='<div class="grp"><div class="grp-label">Daily Log</div>';
+  sorted.forEach(date=>{
+    const d=dates[date];let tags='';
+    d.ev.sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+    d.ev.forEach(e=>{
+      let lbl=e.type+' '+TM(e.timestamp);
+      if(e.mealItems?.length)lbl+=' ('+e.mealItems.map(m=>m.name).filter(Boolean).join(', ')+')';
+      tags+=`<span class="hi-tag" onclick="openEvEdit(${e.id})">${lbl}</span> `;
+    });
+    d.ck.sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+    d.ck.forEach(c=>{
+      tags+=`<span class="hi-tag" onclick="openCkEdit(${c.id})">${c.key}:${c.val} ${TM(c.timestamp)}</span> `;
+    });
+    const note=notesByDate[date];
+    let noteHtml='';
+    if(note?.text)noteHtml=`<div style="margin-top:6px;font-size:12px;color:var(--text-mid);font-style:italic;border-left:2px solid var(--border);padding-left:8px">${esc(note.text)}</div>`;
+    html+=`<div class="hi"><div class="hi-date">${FD(date)}</div><div class="hi-tags">${tags||'—'}</div>${noteHtml}</div>`;
+  });
+  html+='</div>';
+
+  document.getElementById('sec-history').innerHTML=html;
+}
+
+// ═══════════════ EXPORT ═══════════════
+const LAST_SYNC_KEY='ll-last-sync';
+function getLastSync(){return localStorage.getItem(LAST_SYNC_KEY)||'never'}
+function setLastSync(){localStorage.setItem(LAST_SYNC_KEY,new Date().toISOString())}
+
+async function renderExport(){
+  const evs=await all('events');const cks=await all('checkins');const nts=await all('notes');
+  const dates=new Set([...evs.map(e=>e.date),...cks.map(c=>c.date),...nts.map(n=>n.date)]);
+  const ls=getLastSync();
+  const lsDisplay=ls==='never'?'never':TM(ls)+' · '+new Date(ls).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+  let html=`<div class="grp"><div class="grp-label">Stats</div><div class="ex-card" style="text-align:left">
+    <div class="stat-row"><span class="s-l">Days</span><span class="s-v">${dates.size}</span></div>
+    <div class="stat-row"><span class="s-l">Events</span><span class="s-v">${evs.length}</span></div>
+    <div class="stat-row"><span class="s-l">Check-ins</span><span class="s-v">${cks.length}</span></div>
+    <div class="stat-row"><span class="s-l">Notes</span><span class="s-v">${nts.length}</span></div>
+    <div class="stat-row"><span class="s-l">First</span><span class="s-v">${dates.size?[...dates].sort()[0]:'—'}</span></div>
+    <div class="stat-row"><span class="s-l">Last export</span><span class="s-v">${lsDisplay}</span></div>
+  </div></div>`;
+
+  html+=`<div class="grp"><div class="grp-label">Export</div><div class="ex-card">`;
+  html+=`<p>Full dump of all data as CSV. Same filenames every time — just save to the same folder and overwrite.</p>`;
+  html+=`<button class="ex-btn" onclick="doExport()"><svg class="ico" viewBox="0 0 24 24"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>Export All</button>`;
+  html+=`</div></div>`;
+
+  html+=`<div class="grp"><div class="grp-label">Danger</div><div class="ex-card"><p>Clear all local data</p><button class="ex-btn" style="background:var(--red)" onclick="confirmClr()">Clear All</button><div id="clrC" style="display:none;margin-top:10px"><p style="color:var(--red);margin-bottom:8px;font-size:12px">Cannot be undone.</p><button class="ex-btn" style="background:var(--red)" onclick="doClr()">Yes, delete everything</button></div></div></div>`;
+  document.getElementById('sec-export').innerHTML=html;
+}
+
+async function doExport(){
+  const evs=await all('events');const cks=await all('checkins');const nts=await all('notes');
+
+  let ev='date,timestamp,type,meal_items\n';
+  evs.sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  evs.forEach(e=>{
+    const mi=e.mealItems?e.mealItems.map(m=>`${m.name||''}:${m.grams||''}`).join(';'):'';
+    ev+=`${e.date},${e.timestamp},${e.type},"${mi}"\n`;
+  });
+
+  let ck='date,timestamp,key,value\n';
+  cks.sort((a,b)=>a.timestamp.localeCompare(b.timestamp));
+  cks.forEach(c=>{ck+=`${c.date},${c.timestamp},${c.key},${c.val}\n`});
+
+  let nt='date,notes\n';
+  nts.sort((a,b)=>a.date.localeCompare(b.date));
+  nts.forEach(n=>{nt+=`${n.date},"${(n.text||'').replace(/"/g,'""')}"\n`});
+
+  dlF('lifelog_events.csv',ev);
+  setTimeout(()=>dlF('lifelog_checkins.csv',ck),300);
+  setTimeout(()=>dlF('lifelog_notes.csv',nt),600);
+
+  setLastSync();
+  toast('Exported');
+  renderExport();
+}
+
+function dlF(n,c){const b=new Blob([c],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=n;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u)}
+function confirmClr(){document.getElementById('clrC').style.display='block'}
+async function doClr(){await clr();document.getElementById('clrC').style.display='none';toast('Cleared');refresh()}
+
+// ═══════════════ NAV ═══════════════
+function go(t){
+  curTab=t;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+t).classList.add('active');
+  document.getElementById('nav-'+t).classList.add('active');
+  refresh();document.getElementById('mainContent').scrollTop=0;
+}
+function refresh(){
+  if(curTab==='today')renderToday();
+  if(curTab==='history')renderHistory();
+  if(curTab==='export')renderExport();
+}
+
+// ═══════════════ INIT ═══════════════
+async function init(){
+  loadTheme();
+  document.getElementById('hdrDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  await openDB();
+  renderToday();
+}
+init();
+</script>
+</body>
+</html>
